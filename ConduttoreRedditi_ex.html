@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rent Suitability Calculator - Giuliato&Battistin Immobiliare</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #6366F1;
+            --whatsapp-color: #25D366;
+            --bg-main: #F7F8FA;
+            --bg-card: #FFFFFF;
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+            --border-color: #D1D5DB;
+            --success-color: #10B981;
+            --error-color: #EF4444;
+            --font-family: 'Inter', sans-serif;
+            --radius-lg: 16px;
+            --radius-md: 8px;
+            --shadow-card: 0px 4px 6px -1px rgba(0, 0, 0, 0.05), 0px 2px 4px -1px rgba(0, 0, 0, 0.04);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 1rem;
+        }
+        .container { max-width: 700px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background-color: var(--bg-card); border-radius: var(--radius-lg); padding: 2rem; box-shadow: var(--shadow-card); margin-bottom: 2rem; }
+        h2 { font-size: 18px; font-weight: 600; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        h3.section-title { font-size: 16px; font-weight: 600; margin-top: 1.5rem; margin-bottom: 1rem; }
+        p { color: var(--text-secondary); font-size: 14px; }
+        .form-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+        @media (min-width: 640px) { .form-grid { grid-template-columns: repeat(2, 1fr); } }
+        .form-group { position: relative; }
+        .form-group-header { display: flex; align-items: center; margin-bottom: 0.5rem; }
+        .form-group label { font-weight: 500; font-size: 14px; }
+        .input-group { display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; transition: border-color 0.2s; }
+        .input-group:focus-within { border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
+        .input-group-addon { padding: 0.75rem; background-color: var(--bg-main); color: var(--text-secondary); font-weight: 500; }
+        input[type="number"] { width: 100%; padding: 0.75rem; border: none; background-color: var(--bg-card); font-family: var(--font-family); font-size: 1rem; outline: none; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        .btn { display: inline-block; width: 100%; padding: 0.8rem 1.5rem; border-radius: var(--radius-md); border: none; font-weight: 600; font-size: 16px; cursor: pointer; transition: all 0.2s ease; text-align: center; text-decoration: none; }
+        .btn-primary { background-color: var(--primary-color); color: white; margin-top: 1.5rem; }
+        .btn-primary:hover { background-color: #4f46e5; }
+        .btn-secondary { background-color: transparent; color: var(--primary-color); border: 1px solid var(--primary-color); }
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 12px; width: auto; }
+        .btn-secondary:hover { background-color: rgba(99, 102, 241, 0.1); }
+        .btn-whatsapp { background-color: var(--whatsapp-color); color: white; }
+        .btn-whatsapp:hover { background-color: #1EBE57; }
+        .header, .footer { text-align: center; margin-bottom: 2rem; }
+        .header .agency-name { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+        .footer { margin-top: 3rem; font-size: 12px; color: var(--text-secondary); }
+        .footer a { color: var(--primary-color); text-decoration: none; }
+        .footer .disclaimer { font-size: 11px; margin-top: 1rem; font-style: italic; }
+        #results-section { display: none; }
+        #summary-details { margin-top: 2rem; }
+        .judgement-card { padding: 1.5rem; border-radius: var(--radius-lg); text-align: center; }
+        .judgement-title { font-size: 22px; font-weight: 700; margin-bottom: 0.5rem; }
+        .judgement-text { font-size: 14px; }
+        .judgement-congruo { background-color: #f0fdf4; border: 1px solid var(--success-color); color: #14532d; }
+        .judgement-insufficiente { background-color: #fef2f2; border: 1px solid var(--error-color); color: #7f1d1d; }
+        .summary-item { display: flex; justify-content: space-between; padding: 0.85rem 0; border-bottom: 1px solid var(--bg-main); font-size: 14px; }
+        .summary-item:last-child { border-bottom: none; }
+        .summary-item .label { font-weight: 500; color: var(--text-secondary); }
+        .summary-item .value { font-weight: 600; color: var(--text-primary); }
+        .value.strong { color: var(--primary-color); font-weight: 700; font-size: 18px; }
+        .value.negative { color: var(--error-color); font-style: italic; }
+        .conduttore { border: 1px dashed var(--border-color); padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 1rem; position: relative; }
+        .conduttore-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .conduttore-title { font-weight: 600; font-size: 1rem; }
+        .conduttore-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+        @media (min-width: 640px) { .conduttore-grid { grid-template-columns: repeat(3, 1fr); } }
+        #pdf-button-container, #whatsapp-btn-container { margin-top: 2rem; }
+        hr.divider { border: none; border-top: 1px solid var(--bg-main); margin: 2rem 0; }
+        .help-icon { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background-color: var(--text-secondary); color: white; border-radius: 50%; font-size: 12px; line-height: 18px; cursor: pointer; margin-left: 8px; user-select: none; }
+        .tooltip { display: none; position: absolute; z-index: 10; width: calc(100% - 1rem); background: #374151; color: white; padding: 0.75rem; border-radius: var(--radius-md); margin-top: 0.5rem; font-size: 13px; border: 1px solid var(--border-color); }
+        .tooltip.active { display: block; }
+        .info-note { display: none; background-color: #eef2ff; color: #4338ca; padding: 1rem; border-radius: var(--radius-md); border: 1px solid #c7d2fe; margin-top: 1rem; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="agency-name">Giuliato&amp;Battistin Immobiliare</div>
+            <p>Income Suitability Assessment Tool</p>
+        </header>
+
+        <div class="card" id="input-form">
+            <h2>Tenant Information</h2>
+            <div id="conduttori-container"></div>
+            <button class="btn btn-secondary btn-sm" id="add-conduttore-btn">+ Add Tenant</button>
+            <div id="co-conduttore-note" class="info-note">
+                <strong>Note:</strong> "2nd, 3rd, and 4th tenant" refers to adults who are either listed as co-tenants on the lease agreement, or individuals who, while not listed, will be residing in the leased property. In either case, any additional tenants or other adult occupants will be required to sign a joint obligation agreement.
+            </div>
+            <hr class="divider">
+            <h3 class="section-title">Property Data</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="occupanti">Total Number of Occupants</label>
+                    <div class="input-group">
+                        <span class="input-group-addon">Nr.</span>
+                        <input type="number" id="occupanti" placeholder="Ex. 1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="canone-richiesto">Requested Monthly Rent</label>
+                    <div class="input-group">
+                        <span class="input-group-addon">€</span>
+                        <input type="number" id="canone-richiesto" placeholder="Ex. 700">
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-primary" id="calculate-btn">Assess Suitability</button>
+        </div>
+
+        <div id="results-section" class="card">
+            <div id="report-content">
+                <h2>Assessment Result</h2>
+                <div class="judgement-card" id="judgement-result"></div>
+                <div id="summary-details"></div>
+            </div>
+            <div id="pdf-button-container">
+                <button class="btn btn-secondary" id="pdf-btn">Download PDF Report</button>
+            </div>
+            <div id="whatsapp-btn-container"></div>
+        </div>
+
+        <footer class="footer">
+            <p><strong>Giuliato&Battistin Immobiliare</strong></p>
+            <p>Corso SS. Felice e Fortunato n. 29, 36100 Vicenza</p>
+            <p>Tel: +39 0444 525447 | Email: <a href="mailto:info@giuliatobattistin.it">info@giuliatobattistin.it</a></p>
+            <p><a href="https://www.giuliatobattistin.it" target="_blank">www.giuliatobattistin.it</a></p>
+            <p class="disclaimer">This calculation is purely indicative and does not constitute a binding assessment. All lease applications are subject to evaluation and approval by qualified personnel.</p>
+        </footer>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const conduttoriContainer = document.getElementById('conduttori-container');
+        const addConduttoreBtn = document.getElementById('add-conduttore-btn');
+        const calculateBtn = document.getElementById('calculate-btn');
+        const resultsSection = document.getElementById('results-section');
+        const judgementResultEl = document.getElementById('judgement-result');
+        const summaryDetailsEl = document.getElementById('summary-details');
+        const pdfBtn = document.getElementById('pdf-btn');
+        const whatsappBtnContainer = document.getElementById('whatsapp-btn-container');
+        const coConduttoreNote = document.getElementById('co-conduttore-note');
+        
+        let conduttoreIdCounter = 0;
+
+        function updateConduttoreTitles() {
+            const conduttoriEls = conduttoriContainer.querySelectorAll('.conduttore');
+            if (conduttoriEls.length === 1) {
+                conduttoriEls[0].querySelector('.conduttore-title').textContent = 'Tenant';
+            } else {
+                conduttoriEls.forEach((el, index) => {
+                    el.querySelector('.conduttore-title').textContent = `Tenant ${index + 1}`;
+                });
+            }
+        }
+
+        function createConduttoreElement(id) {
+            const div = document.createElement('div');
+            div.className = 'conduttore';
+            div.id = `conduttore-${id}`;
+            div.innerHTML = `
+                <div class="conduttore-header">
+                    <span class="conduttore-title"></span>
+                    ${conduttoriContainer.children.length > 0 ? `<button class="btn btn-sm" onclick="removeConduttore(${id})">&times; Remove</button>` : ''}
+                </div>
+                <div class="conduttore-grid">
+                    <div class="form-group">
+                        <div class="form-group-header">
+                            <label for="reddito-lordo-${id}">Gross Income</label>
+                            <span class="help-icon" data-tooltip-target="tooltip-ral-${id}">?</span>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-addon">€</span>
+                            <input type="number" id="reddito-lordo-${id}" class="reddito-input" placeholder="Annual Gross">
+                        </div>
+                        <div class="tooltip" id="tooltip-ral-${id}">Based on the tenant's income type, the gross annual income or taxable income is found on the corresponding income document, such as the CU Model (Certificazione Unica) for employment and pension income or the UNICO Model (Modello UNICO) for self-employment income.</div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-group-header">
+                            <label for="imposte-${id}">Annual Taxes</label>
+                            <span class="help-icon" data-tooltip-target="tooltip-imposte-${id}">?</span>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-addon">€</span>
+                            <input type="number" id="imposte-${id}" class="imposte-input" placeholder="Tax Return">
+                        </div>
+                        <div class="tooltip"id="tooltip-imposte-${id}">Based on the tenant's income type, tax withholdings are found on the corresponding income document, such as the CU Model (Certificazione Unica) for employment and pension income or the UNICO Model (Modello UNICO) for self-employment income.</div>
+                    </div>
+                     <div class="form-group">
+                        <div class="form-group-header">
+                            <label for="finanziamenti-${id}">Loan Payments</label>
+                            <span class="help-icon" data-tooltip-target="tooltip-fin-${id}">?</span>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-addon">€</span>
+                            <input type="number" id="finanziamenti-${id}" class="finanziamenti-input" placeholder="Monthly Payment">
+                        </div>
+                        <div class="tooltip" id="tooltip-fin-${id}">Data related to loans taken from pay slips (salary-backed loans, payment delegations, etc.) or from mortgage information provided by the tenants and the UNICO model.</div>
+                    </div>
+                </div>`;
+            conduttoriContainer.appendChild(div);
+            updateCoConduttoreNote();
+            updateConduttoreTitles();
+        }
+
+        function updateCoConduttoreNote() {
+            coConduttoreNote.style.display = conduttoriContainer.children.length > 1 ? 'block' : 'none';
+        }
+
+        window.removeConduttore = function(id) {
+            document.getElementById(`conduttore-${id}`).remove();
+            updateCoConduttoreNote();
+            updateConduttoreTitles();
+        }
+
+        addConduttoreBtn.addEventListener('click', () => {
+            conduttoreIdCounter++;
+            createConduttoreElement(conduttoreIdCounter);
+        });
+
+        document.body.addEventListener('click', function(e) {
+            if (e.target.classList.contains('help-icon')) {
+                e.stopPropagation(); 
+                const targetId = e.target.getAttribute('data-tooltip-target');
+                const tooltip = document.getElementById(targetId);
+                const isAlreadyActive = tooltip.classList.contains('active');
+                document.querySelectorAll('.tooltip.active').forEach(activeTooltip => {
+                    activeTooltip.classList.remove('active');
+                });
+                if (!isAlreadyActive) {
+                    tooltip.classList.add('active');
+                }
+            } else {
+                document.querySelectorAll('.tooltip.active').forEach(activeTooltip => {
+                    activeTooltip.classList.remove('active');
+                });
+            }
+        });
+
+        function formatCurrency(value) {
+            // Using it-IT locale to keep the € formatting consistent, but US English text.
+            return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value);
+        }
+        
+        function renderSummaryItem(label, value, valueClass = '') {
+            return `<div class="summary-item"><span class="label">${label}</span><span class="value ${valueClass}">${value}</span></div>`;
+        }
+        
+        calculateBtn.addEventListener('click', () => {
+            let totalGrossIncome = 0;
+            let totalAnnualTaxes = 0;
+            let totalMonthlyLoans = 0;
+            const conduttoriEls = conduttoriContainer.querySelectorAll('.conduttore');
+            if (conduttoriEls.length === 0) {
+                alert('Please add at least one tenant.');
+                return;
+            }
+            conduttoriEls.forEach(el => {
+                const id = el.id.split('-')[1];
+                totalGrossIncome += parseFloat(document.getElementById(`reddito-lordo-${id}`).value) || 0;
+                totalAnnualTaxes += parseFloat(document.getElementById(`imposte-${id}`).value) || 0;
+                totalMonthlyLoans += parseFloat(document.getElementById(`finanziamenti-${id}`).value) || 0;
+            });
+            const totalAnnualLoans = totalMonthlyLoans * 12;
+
+            const numOccupants = parseInt(document.getElementById('occupanti').value) || 0;
+            const monthlyRent = parseFloat(document.getElementById('canone-richiesto').value) || 0;
+            const annualRent = monthlyRent * 12;
+
+            if (totalGrossIncome === 0 || numOccupants === 0 || monthlyRent === 0) {
+                alert('Please ensure you have entered Gross Income, Number of Occupants, and Requested Rent.');
+                return;
+            }
+
+            let baseMonthlyCost;
+            if (numOccupants === 1) { baseMonthlyCost = 600; }
+            else if (numOccupants === 2) { baseMonthlyCost = 700; }
+            else if (numOccupants === 3) { baseMonthlyCost = 800; }
+            else if (numOccupants === 4) { baseMonthlyCost = 900; }
+            else { baseMonthlyCost = 1000; }
+            const baseAnnualCost = baseMonthlyCost * 12;
+
+            const requiredGrossIncome = baseAnnualCost + totalAnnualTaxes + totalAnnualLoans + annualRent;
+
+            const isSufficient = totalGrossIncome >= requiredGrossIncome;
+            let judgementClass, judgementTitle;
+
+            if (isSufficient) {
+                judgementClass = 'judgement-congruo';
+                judgementTitle = 'SUITABLE INCOME';
+            } else {
+                judgementClass = 'judgement-insufficiente';
+                judgementTitle = 'INSUFFICIENT INCOME';
+            }
+
+            resultsSection.style.display = 'block';
+            judgementResultEl.className = 'judgement-card ' + judgementClass;
+            judgementResultEl.innerHTML = `<div class="judgement-title">${judgementTitle}</div>`;
+            
+            const difference = totalGrossIncome - requiredGrossIncome;
+            
+            let differenceHtml;
+            if (isSufficient) {
+                 differenceHtml = renderSummaryItem('SURPLUS', formatCurrency(difference));
+            } else {
+                 differenceHtml = renderSummaryItem('OUTCOME', 'Additional guarantees required', 'negative');
+            }
+
+            summaryDetailsEl.innerHTML = `
+                ${renderSummaryItem('Total Annual Gross Income', formatCurrency(totalGrossIncome))}
+                ${renderSummaryItem('Total Annual Taxes', formatCurrency(totalAnnualTaxes))}
+                ${renderSummaryItem('Total Monthly Loan Payments', formatCurrency(totalMonthlyLoans))}
+                <hr style="border:none; margin: 0.5rem 0;">
+                ${renderSummaryItem('Required Gross Income', formatCurrency(requiredGrossIncome), 'strong')}
+                <hr style="border:none; margin: 0.5rem 0;">
+                ${differenceHtml}
+            `;
+
+            const summaryText = `*Suitability Assessment Summary*\n\n` +
+                `*Total Annual Gross Income:* ${formatCurrency(totalGrossIncome)}\n` +
+                `*Total Annual Taxes:* ${formatCurrency(totalAnnualTaxes)}\n` +
+                `*Total Monthly Loan Payments:* ${formatCurrency(totalMonthlyLoans)}\n` +
+                `*Requested Monthly Rent:* ${formatCurrency(monthlyRent)}\n\n` +
+                `*--- Result ---*\n` +
+                `*Required Income:* ${formatCurrency(requiredGrossIncome)}\n` +
+                `*Judgment:* ${judgementTitle}\n\n` +
+                `I would like to receive more information with no obligation.`;
+
+            const encodedText = encodeURIComponent(summaryText);
+            const whatsappUrl = `https://wa.me/390444525447?text=${encodedText}`; // Using your saved WA number
+            whatsappBtnContainer.innerHTML = `<a href="${whatsappUrl}" target="_blank" class="btn btn-whatsapp">Need more information?</a>`;
+            
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+        
+        pdfBtn.addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const reportContent = document.getElementById('report-content');
+            const originalBg = reportContent.style.backgroundColor;
+            reportContent.style.backgroundColor = 'white';
+            
+            html2canvas(reportContent, { scale: 2 }).then(canvas => {
+                reportContent.style.backgroundColor = originalBg;
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const imgProps = pdf.getImageProperties(imgData);
+                const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(16);
+                pdf.setTextColor(getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim());
+                pdf.text('Suitability Assessment Report', pdfWidth / 2, 15, { align: 'center' });
+                pdf.addImage(imgData, 'PNG', 10, 25, pdfWidth - 20, imgHeight * ((pdfWidth - 20)/pdfWidth) );
+                pdf.setFontSize(8);
+                pdf.setTextColor(getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim());
+                const text = `Report generated by Giuliato&Battistin Immobiliare | ${new Date().toLocaleDateString('en-US')}`;
+                pdf.text(text, pdfWidth / 2, pdf.internal.pageSize.getHeight() - 10, { align: 'center' });
+                
+                pdf.save(`Rent_Suitability_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+            });
+        });
+
+        conduttoreIdCounter = 1;
+        createConduttoreElement(conduttoreIdCounter);
+    });
+    </script>
+</body>
+</html>
