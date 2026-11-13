@@ -1,387 +1,498 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rent Suitability Calculator - Giuliato&Battistin Immobiliare</title>
-    
+    <script>try{if(window.self!==window.top)document.documentElement.classList.add("embedded")}catch(e){document.documentElement.classList.add("embedded")}</script>
+    <title>Tenant Income Suitability Check - Giuliato&amp;Battistin</title>
+    <meta name="description" content="Check whether a tenant's income is suitable for the requested rent: gross income, taxes and loans. A free tool by Giuliato&amp;Battistin.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #6366F1;
-            --whatsapp-color: #25D366;
-            --bg-main: #F7F8FA;
-            --bg-card: #FFFFFF;
-            --text-primary: #1F2937;
-            --text-secondary: #6B7280;
-            --border-color: #D1D5DB;
-            --success-color: #10B981;
-            --error-color: #EF4444;
-            --font-family: 'Inter', sans-serif;
-            --radius-lg: 16px;
-            --radius-md: 8px;
-            --shadow-card: 0px 4px 6px -1px rgba(0, 0, 0, 0.05), 0px 2px 4px -1px rgba(0, 0, 0, 0.04);
+            /* Palette lifted from giuliatobattistin.it */
+            --bg: #2C3E50;
+            --deep: #0D1F31;
+            --line: rgba(255, 255, 255, 0.16);
+            --line-strong: rgba(255, 255, 255, 0.34);
+            --text: rgba(255, 255, 255, 0.88);
+            --muted: rgba(255, 255, 255, 0.72);
+            --white: #FFFFFF;
+            --teal: #0F766E;
+            --teal-hover: #115E59;
+            --mint: #32D296;
+            --red: #E74C3C;
+            --red-text: #FF9B8F;
+
+            --sheet: #FFFFFF;
+            --sheet-text: #2C3E50;
+            --sheet-muted: #56677A;
+            --sheet-line: #DCE1E6;
+            --sheet-soft: #F4F6F8;
+
+            --font-display: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+            --font-body: 'Open Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+            --space-1: 8px; --space-2: 16px; --space-3: 24px; --space-4: 32px; --space-5: 48px;
+            --radius-panel: 16px; --radius-field: 10px; --radius-pill: 9999px;
+            --shadow-panel: 0 18px 40px -18px rgba(0, 0, 0, 0.55);
+            --shadow-focus: 0 0 0 3px rgba(50, 210, 150, 0.35);
+            --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: var(--font-family);
-            background-color: var(--bg-main);
-            color: var(--text-primary);
-            line-height: 1.6;
-            padding: 1rem;
+
+        *, *::before, *::after { box-sizing: border-box; }
+        html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; color-scheme: dark; scrollbar-color: var(--line-strong) var(--bg); }
+        body { font-family: var(--font-body); font-size: 15px; line-height: 1.6; margin: 0; padding: var(--space-5) var(--space-2) 96px; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+        ::selection { background: var(--mint); color: var(--deep); }
+        :focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; }
+        .hidden { display: none !important; }
+
+        .container { max-width: 960px; margin: 0 auto; }
+        html.embedded body { padding-top: var(--space-2); padding-bottom: var(--space-4); }
+        html.embedded .page-head .brand, html.embedded .page-head h1, html.embedded .contact-footer { display: none; }
+        html.embedded .page-head { margin-bottom: var(--space-3); }
+
+        .page-head { text-align: center; margin-bottom: var(--space-4); }
+        .page-head .brand { font-family: var(--font-display); font-size: 14px; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 600; color: var(--muted); margin: 0 0 var(--space-2); }
+        .page-head h1 { font-family: var(--font-display); font-size: clamp(26px, 5vw, 36px); font-weight: 700; letter-spacing: -0.01em; line-height: 1.15; color: var(--white); margin: 0; text-wrap: balance; }
+        .page-head .subtitle { margin: var(--space-2) auto 0; max-width: 60ch; color: var(--muted); }
+
+        /* Form panel */
+        #congruity-form { background: var(--deep); border: 1px solid var(--line); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel); padding: var(--space-5); display: grid; grid-template-columns: 1fr; row-gap: var(--space-5); align-items: start; }
+        .form-section { border: 0; margin: 0; padding: 0; min-width: 0; }
+        .form-section legend { float: left; width: 100%; padding: 0 0 var(--space-2); margin: 0 0 var(--space-3); border-bottom: 1px solid var(--line); font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: 0.01em; line-height: 1.3; color: var(--white); }
+        .form-section legend + * { clear: both; }
+        .field-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); column-gap: var(--space-5); row-gap: var(--space-3); align-items: start; }
+        .field { min-width: 0; }
+        .field label:not(.choice), .choices-label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--text); font-size: 13.5px; }
+        .input-wrapper { position: relative; }
+        .input-wrapper .currency-symbol { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 600; pointer-events: none; }
+        .field input[type="text"] {
+            display: block; width: 100%; min-height: 50px; padding: 12px 14px 12px 34px; border: 1px solid var(--line-strong); border-radius: var(--radius-field);
+            font-family: inherit; font-size: 16px; line-height: 1.4; color: var(--white); background: var(--bg); -webkit-appearance: none; appearance: none;
+            transition: border-color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out); font-variant-numeric: tabular-nums;
         }
-        .container { max-width: 700px; margin: 2rem auto; padding: 0 1rem; }
-        .card { background-color: var(--bg-card); border-radius: var(--radius-lg); padding: 2rem; box-shadow: var(--shadow-card); margin-bottom: 2rem; }
-        h2 { font-size: 18px; font-weight: 600; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
-        h3.section-title { font-size: 16px; font-weight: 600; margin-top: 1.5rem; margin-bottom: 1rem; }
-        p { color: var(--text-secondary); font-size: 14px; }
-        .form-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
-        @media (min-width: 640px) { .form-grid { grid-template-columns: repeat(2, 1fr); } }
-        .form-group { position: relative; }
-        .form-group-header { display: flex; align-items: center; margin-bottom: 0.5rem; }
-        .form-group label { font-weight: 500; font-size: 14px; }
-        .input-group { display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; transition: border-color 0.2s; }
-        .input-group:focus-within { border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
-        .input-group-addon { padding: 0.75rem; background-color: var(--bg-main); color: var(--text-secondary); font-weight: 500; }
-        input[type="number"] { width: 100%; padding: 0.75rem; border: none; background-color: var(--bg-card); font-family: var(--font-family); font-size: 1rem; outline: none; }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
-        .btn { display: inline-block; width: 100%; padding: 0.8rem 1.5rem; border-radius: var(--radius-md); border: none; font-weight: 600; font-size: 16px; cursor: pointer; transition: all 0.2s ease; text-align: center; text-decoration: none; }
-        .btn-primary { background-color: var(--primary-color); color: white; margin-top: 1.5rem; }
-        .btn-primary:hover { background-color: #4f46e5; }
-        .btn-secondary { background-color: transparent; color: var(--primary-color); border: 1px solid var(--primary-color); }
-        .btn-sm { padding: 0.4rem 0.8rem; font-size: 12px; width: auto; }
-        .btn-secondary:hover { background-color: rgba(99, 102, 241, 0.1); }
-        .btn-whatsapp { background-color: var(--whatsapp-color); color: white; }
-        .btn-whatsapp:hover { background-color: #1EBE57; }
-        .header, .footer { text-align: center; margin-bottom: 2rem; }
-        .header .agency-name { font-size: 24px; font-weight: 700; color: var(--text-primary); }
-        .footer { margin-top: 3rem; font-size: 12px; color: var(--text-secondary); }
-        .footer a { color: var(--primary-color); text-decoration: none; }
-        .footer .disclaimer { font-size: 11px; margin-top: 1rem; font-style: italic; }
-        #results-section { display: none; }
-        #summary-details { margin-top: 2rem; }
-        .judgement-card { padding: 1.5rem; border-radius: var(--radius-lg); text-align: center; }
-        .judgement-title { font-size: 22px; font-weight: 700; margin-bottom: 0.5rem; }
-        .judgement-text { font-size: 14px; }
-        .judgement-congruo { background-color: #f0fdf4; border: 1px solid var(--success-color); color: #14532d; }
-        .judgement-insufficiente { background-color: #fef2f2; border: 1px solid var(--error-color); color: #7f1d1d; }
-        .summary-item { display: flex; justify-content: space-between; padding: 0.85rem 0; border-bottom: 1px solid var(--bg-main); font-size: 14px; }
-        .summary-item:last-child { border-bottom: none; }
-        .summary-item .label { font-weight: 500; color: var(--text-secondary); }
-        .summary-item .value { font-weight: 600; color: var(--text-primary); }
-        .value.strong { color: var(--primary-color); font-weight: 700; font-size: 18px; }
-        .value.negative { color: var(--error-color); font-style: italic; }
-        .conduttore { border: 1px dashed var(--border-color); padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 1rem; position: relative; }
-        .conduttore-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-        .conduttore-title { font-weight: 600; font-size: 1rem; }
-        .conduttore-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
-        @media (min-width: 640px) { .conduttore-grid { grid-template-columns: repeat(3, 1fr); } }
-        #pdf-button-container, #whatsapp-btn-container { margin-top: 2rem; }
-        hr.divider { border: none; border-top: 1px solid var(--bg-main); margin: 2rem 0; }
-        .help-icon { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background-color: var(--text-secondary); color: white; border-radius: 50%; font-size: 12px; line-height: 18px; cursor: pointer; margin-left: 8px; user-select: none; }
-        .tooltip { display: none; position: absolute; z-index: 10; width: calc(100% - 1rem); background: #374151; color: white; padding: 0.75rem; border-radius: var(--radius-md); margin-top: 0.5rem; font-size: 13px; border: 1px solid var(--border-color); }
-        .tooltip.active { display: block; }
-        .info-note { display: none; background-color: #eef2ff; color: #4338ca; padding: 1rem; border-radius: var(--radius-md); border: 1px solid #c7d2fe; margin-top: 1rem; font-size: 13px; }
+        .field input::placeholder { color: var(--muted); opacity: 0.6; }
+        .field input[type="text"]:hover { border-color: rgba(255, 255, 255, 0.55); }
+        .field input[type="text"]:focus { border-color: var(--mint); outline: none; box-shadow: var(--shadow-focus); }
+        [aria-invalid="true"] { border-color: var(--red) !important; }
+        .hint { font-size: 12.5px; color: var(--muted); margin: 5px 0 0; display: block; line-height: 1.5; }
+
+        .choices { display: grid; gap: 4px; }
+        .choice { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 4px; font-size: 14px; color: var(--text); cursor: pointer; line-height: 1.4; }
+        .choice input { flex: none; width: 20px; height: 20px; margin: 0; accent-color: var(--mint); cursor: pointer; }
+        .choices-box { margin-top: var(--space-2); padding: var(--space-2); background: rgba(255, 255, 255, 0.05); border-radius: var(--radius-field); }
+
+        .form-error { margin: 0; text-align: center; color: var(--red-text); font-weight: 600; font-size: 14px; }
+        .privacy { margin: 0; text-align: center; font-size: 12.5px; color: var(--muted); }
+
+        .btn { font-family: var(--font-display); color: #fff; display: inline-flex; justify-content: center; align-items: center; gap: var(--space-1); padding: 12px 24px; min-height: 48px; width: 100%; border: 1px solid transparent; border-radius: var(--radius-pill); font-size: 14px; font-weight: 600; letter-spacing: 0.04em; line-height: 1.3; text-align: center; cursor: pointer; transition: background-color 0.2s var(--ease-out), transform 0.15s var(--ease-out), border-color 0.2s var(--ease-out), color 0.2s var(--ease-out); }
+        .btn svg { width: 16px; height: 16px; flex: none; }
+        .btn:hover { transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn-primary { background: var(--teal); }
+        .btn-primary:hover { background: var(--teal-hover); }
+        .btn-outline { background: transparent; color: var(--sheet-text); border-color: var(--sheet-text); }
+        .btn-outline:hover { background: var(--sheet-text); color: #fff; }
+        #btn-calc { justify-self: center; width: min(100%, 380px); padding: 16px 32px; font-size: 15px; text-transform: uppercase; }
+
+        /* Results: white sheet */
+        .results-section { display: none; margin-top: var(--space-5); background: var(--sheet); color: var(--sheet-muted); padding: var(--space-5); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel); scroll-margin-top: var(--space-3); }
+        .results-section:focus { outline: none; }
+        .results-section.visible { display: block; animation: reveal 0.6s var(--ease-out); }
+        @keyframes reveal { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+        .highlight-box { margin: 0 0 var(--space-2); }
+        .highlight-box p { margin: 0; font-family: var(--font-display); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 700; color: var(--teal); }
+        .highlight-box .range { display: block; margin-top: 6px; font-family: var(--font-display); font-size: clamp(28px, 6vw, 48px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; color: var(--sheet-text); font-variant-numeric: tabular-nums; }
+        .callout { margin: 0 0 var(--space-3); padding: var(--space-2) var(--space-3); border-radius: var(--radius-field); background: #E6F4F2; color: #0B4F49; font-size: 14.5px; line-height: 1.6; }
+        .callout.warn { background: #FFF1E8; color: #7A3412; }
+        .chart-bar { display: flex; height: 14px; border-radius: var(--radius-pill); overflow: hidden; background: var(--sheet-soft); margin: 0 0 var(--space-3); }
+        .chart-segment { height: 100%; width: 0; transition: width 0.8s var(--ease-out); }
+        .results-section h2 { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--sheet-text); margin: 0 0 var(--space-2); padding-top: var(--space-4); border-top: 1px solid var(--sheet-line); }
+        .detail-list { margin: 0; }
+        .detail-list .row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); padding: 10px 0; border-bottom: 1px solid var(--sheet-line); font-size: 14.5px; }
+        .detail-list dt { display: flex; align-items: center; gap: 10px; color: var(--sheet-muted); }
+        .detail-list dd { margin: 0; text-align: right; font-weight: 600; color: var(--sheet-text); font-variant-numeric: tabular-nums; }
+        .detail-list .row.strong dt { color: var(--sheet-text); font-weight: 700; }
+        .detail-list .row.strong dd { color: #115E59; font-weight: 700; }
+        .detail-list .row.deduction dd { color: #7A3412; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+        .result-actions { display: flex; gap: var(--space-2); margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--sheet-line); flex-wrap: wrap; }
+        .result-actions .btn { flex: 1 1 240px; }
+        .results-section :focus-visible { outline-color: var(--teal); }
+
+        .contact-footer { margin-top: var(--space-5); text-align: center; font-size: 12.5px; color: var(--muted); }
+        .contact-footer p { margin: 0 0 4px; }
+        .contact-footer a { color: var(--text); text-decoration: none; font-weight: 600; }
+        .contact-footer a:hover { color: var(--mint); text-decoration: underline; }
+
+        @media (max-width: 640px) {
+            body { padding-top: var(--space-4); }
+            #congruity-form { padding: var(--space-3) var(--space-2); row-gap: var(--space-4); border-radius: 14px; }
+            .results-section { padding: var(--space-4) var(--space-2); border-radius: 14px; }
+            .detail-list .row { flex-wrap: wrap; }
+            .detail-list dd { text-align: left; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+            .btn:hover { transform: none; }
+        }
+        /* Congruity tool specifics */
+        .field input[type="number"] {
+            display: block; width: 100%; min-height: 50px; padding: 12px 14px 12px 34px; border: 1px solid var(--line-strong); border-radius: var(--radius-field);
+            font-family: inherit; font-size: 16px; line-height: 1.4; color: var(--white); background: var(--bg); -webkit-appearance: none; appearance: none; -moz-appearance: textfield;
+            transition: border-color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out); font-variant-numeric: tabular-nums;
+        }
+        .field input[type="number"]::-webkit-outer-spin-button, .field input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .field input[type="number"]:hover { border-color: rgba(255, 255, 255, 0.55); }
+        .field input[type="number"]:focus { border-color: var(--mint); outline: none; box-shadow: var(--shadow-focus); }
+        .field input.no-symbol { padding-left: 14px; }
+        .tenant { margin: 0 0 var(--space-2); padding: var(--space-3); background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); border-radius: var(--radius-field); }
+        .tenant-head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2); min-height: 32px; }
+        .tenant-title { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--white); }
+        .tenant .field-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); column-gap: var(--space-3); }
+        .label-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .label-row label { margin: 0 !important; }
+        .help-btn { flex: none; width: 24px; height: 24px; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%; background: transparent; color: var(--muted); font: 700 12px/1 var(--font-display); cursor: pointer; transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out); }
+        .help-btn:hover, .help-btn[aria-expanded="true"] { background: var(--mint); color: var(--deep); border-color: var(--mint); }
+        .help-text { margin: 0 0 8px; padding: 10px 12px; background: rgba(255, 255, 255, 0.07); border-radius: var(--radius-field); font-size: 12.5px; line-height: 1.55; color: var(--text); }
+        .btn-ghost { width: auto; min-height: 44px; padding: 10px 20px; background: transparent; border-color: var(--line-strong); font-size: 13px; }
+        .btn-ghost:hover { border-color: var(--mint); color: var(--mint); }
+        .btn-remove { width: auto; min-height: 32px; padding: 4px 14px; background: transparent; border-color: var(--line-strong); font-size: 12px; letter-spacing: 0.02em; }
+        .btn-remove:hover { border-color: var(--red-text); color: var(--red-text); }
+        .info-note { margin: var(--space-2) 0 0; padding: var(--space-2) var(--space-3); background: rgba(250, 145, 90, 0.1); border: 1px solid rgba(250, 145, 90, 0.4); border-radius: var(--radius-field); font-size: 13.5px; line-height: 1.6; color: var(--text); }
+        .info-note strong { color: var(--white); }
+        .verdict { font-family: var(--font-display); }
+        .verdict.ok { color: #115E59; }
+        .verdict.ko { color: #B42318; }
+        .sheet-note { margin: var(--space-3) 0 0; font-size: 12.5px; color: var(--sheet-muted); }
+        .btn-link { text-decoration: none; }
     </style>
 </head>
 <body>
     <div class="container">
-        <header class="header">
-            <div class="agency-name">Giuliato&amp;Battistin Immobiliare</div>
-            <p>Income Suitability Assessment Tool</p>
+        <header class="page-head">
+            <p class="brand">Giuliato&amp;Battistin</p>
+            <h1>Tenant income suitability check</h1>
+            <p class="subtitle">Assess whether the declared income is adequate for the requested rent, taking taxes, loans and living costs into account.</p>
         </header>
 
-        <div class="card" id="input-form">
-            <h2>Tenant Information</h2>
-            <div id="conduttori-container"></div>
-            <button class="btn btn-secondary btn-sm" id="add-conduttore-btn">+ Add Tenant</button>
-            <div id="co-conduttore-note" class="info-note">
-                <strong>Note:</strong> "2nd, 3rd, and 4th tenant" refers to adults who are either listed as co-tenants on the lease agreement, or individuals who, while not listed, will be residing in the leased property. In either case, any additional tenants or other adult occupants will be required to sign a joint obligation agreement.
-            </div>
-            <hr class="divider">
-            <h3 class="section-title">Property Data</h3>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="occupanti">Total Number of Occupants</label>
-                    <div class="input-group">
-                        <span class="input-group-addon">Nr.</span>
-                        <input type="number" id="occupanti" placeholder="Ex. 1">
+        <form id="congruity-form" novalidate>
+            <fieldset class="form-section">
+                <legend>1. Tenant details</legend>
+                <div id="tenants"></div>
+                <button type="button" class="btn btn-ghost" id="add-tenant-btn">+ Add tenant</button>
+                <div id="co-note" class="info-note hidden"><strong>Note:</strong> "2nd, 3rd and 4th tenant" refers to adults who are listed as co-tenants on the lease, or who, while not listed, will live in the property. In either case, any additional tenants or other adult occupants will sign a joint obligation agreement.</div>
+            </fieldset>
+
+            <fieldset class="form-section">
+                <legend>2. Property details</legend>
+                <div class="field-grid">
+                    <div class="field">
+                        <label for="occupants">Total number of occupants</label>
+                        <input type="number" class="no-symbol" id="occupants" inputmode="numeric" min="1" step="1" placeholder="E.g. 2">
+                        <span class="hint">Count everyone who will live in the property.</span>
+                    </div>
+                    <div class="field">
+                        <label for="rent">Requested monthly rent</label>
+                        <div class="input-wrapper"><span class="currency-symbol">€</span><input type="number" id="rent" inputmode="decimal" min="0" step="any" placeholder="E.g. 700"></div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="canone-richiesto">Requested Monthly Rent</label>
-                    <div class="input-group">
-                        <span class="input-group-addon">€</span>
-                        <input type="number" id="canone-richiesto" placeholder="Ex. 700">
-                    </div>
-                </div>
-            </div>
-            <button class="btn btn-primary" id="calculate-btn">Assess Suitability</button>
-        </div>
+            </fieldset>
 
-        <div id="results-section" class="card">
-            <div id="report-content">
-                <h2>Assessment Result</h2>
-                <div class="judgement-card" id="judgement-result"></div>
-                <div id="summary-details"></div>
-            </div>
-            <div id="pdf-button-container">
-                <button class="btn btn-secondary" id="pdf-btn">Download PDF Report</button>
-            </div>
-            <div id="whatsapp-btn-container"></div>
-        </div>
+            <p id="error-message" class="form-error hidden" role="alert"></p>
+            <button type="submit" id="btn-calc" class="btn btn-primary">Check suitability</button>
+            <p class="privacy">The calculation runs in your browser: nothing is sent or saved.</p>
+        </form>
 
-        <footer class="footer">
-            <p><strong>Giuliato&Battistin Immobiliare</strong></p>
+        <section id="results-section" class="results-section" tabindex="-1" aria-live="polite">
+            <div class="highlight-box">
+                <p>Assessment result</p>
+                <span class="range verdict" id="verdict">-</span>
+            </div>
+            <div class="callout" id="verdict-note"></div>
+
+            <h2>Calculation breakdown</h2>
+            <dl class="detail-list" id="summary-details"></dl>
+            <p class="sheet-note">This calculation is purely indicative and does not constitute a binding assessment. All lease applications are subject to evaluation and approval by qualified personnel.</p>
+
+            <div class="result-actions">
+                <button id="pdf-btn" type="button" class="btn btn-outline"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4H1v4a4 4 0 0 0 4 4h14a4 4 0 0 0 4-4v-4h-2zm-1-4-1.41-1.41L13 15.17V3h-2v12.17l-5.59-5.58L4 11l8 8 8-8z"/></svg>Download the PDF report</button>
+                <a id="whatsapp-btn" class="btn btn-primary btn-link" href="#" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.575 6.575 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.1-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943s-.08-.15-.197-.25z"/></svg>Need more information?</a>
+            </div>
+        </section>
+
+        <footer class="contact-footer">
+            <p><strong>Giuliato&amp;Battistin Immobiliare</strong></p>
             <p>Corso SS. Felice e Fortunato n. 29, 36100 Vicenza</p>
-            <p>Tel: +39 0444 525447 | Email: <a href="mailto:info@giuliatobattistin.it">info@giuliatobattistin.it</a></p>
-            <p><a href="https://www.giuliatobattistin.it" target="_blank">www.giuliatobattistin.it</a></p>
-            <p class="disclaimer">This calculation is purely indicative and does not constitute a binding assessment. All lease applications are subject to evaluation and approval by qualified personnel.</p>
+            <p><a href="mailto:info@giuliatobattistin.it">info@giuliatobattistin.it</a> | <a href="tel:+390444525447">+39 0444 525447</a></p>
+            <p><a href="https://www.giuliatobattistin.it" target="_blank" rel="noopener">www.giuliatobattistin.it</a></p>
         </footer>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const conduttoriContainer = document.getElementById('conduttori-container');
-        const addConduttoreBtn = document.getElementById('add-conduttore-btn');
-        const calculateBtn = document.getElementById('calculate-btn');
-        const resultsSection = document.getElementById('results-section');
-        const judgementResultEl = document.getElementById('judgement-result');
-        const summaryDetailsEl = document.getElementById('summary-details');
-        const pdfBtn = document.getElementById('pdf-btn');
-        const whatsappBtnContainer = document.getElementById('whatsapp-btn-container');
-        const coConduttoreNote = document.getElementById('co-conduttore-note');
-        
-        let conduttoreIdCounter = 0;
+        const T = {
+        "tenant": "Tenant",
+        "remove": "Remove",
+        "helpAria": "Show or hide the explanation",
+        "label_gross": "Gross annual income",
+        "label_taxes": "Annual taxes",
+        "label_loans": "Loans (monthly payment)",
+        "ph_gross": "E.g. 30,000",
+        "ph_taxes": "E.g. 6,000",
+        "ph_loans": "E.g. 200",
+        "help_gross": "Based on the tenant's income type, the gross annual or taxable income is found on the corresponding income document: the CU Model (Certificazione Unica) for employment and pension income, the UNICO Model for self-employment income.",
+        "help_taxes": "Based on the tenant's income type, tax withholdings are found on the corresponding income document: the CU Model (Certificazione Unica) for employment and pension income, the UNICO Model for self-employment income.",
+        "help_loans": "Loan data taken from pay slips (salary-backed loans, payment delegations and similar) or from mortgage information provided by the tenants and the UNICO Model. Enter the monthly payment.",
+        "errNoTenant": "Please add at least one tenant.",
+        "errNegative": "Amounts cannot be negative.",
+        "errGross": "Please enter the tenant's gross annual income.",
+        "errOccupants": "Please enter the number of occupants (a whole number, at least 1).",
+        "errRent": "Please enter the requested monthly rent.",
+        "errTaxes": "Taxes cannot exceed gross income.",
+        "errCalcFirst": "Please run a calculation first.",
+        "errPdfLib": "The PDF generator is not available: check your connection and try again.",
+        "okTitle": "SUITABLE INCOME",
+        "koTitle": "INSUFFICIENT INCOME",
+        "okNote": "The declared income covers taxes, loans, living costs and rent.",
+        "koNote": "Additional guarantees required.",
+        "rowGross": "Total annual gross income",
+        "rowTaxes": "Total annual taxes",
+        "rowLoans": "Annual loan payments ({monthly} per month)",
+        "rowLiving": "Living costs ({n} occupants, {monthly} per month)",
+        "rowRent": "Annual rent ({monthly} per month)",
+        "rowRequired": "Required gross income",
+        "rowSurplus": "Surplus",
+        "rowShortfall": "Income shortfall",
+        "waTitle": "*Suitability Assessment Summary*",
+        "waGross": "*Total annual gross income*",
+        "waTaxes": "*Total annual taxes*",
+        "waLoans": "*Total monthly loan payments*",
+        "waRent": "*Requested monthly rent*",
+        "waOccupants": "*Occupants*",
+        "waRequired": "*Required income*",
+        "waVerdict": "*Verdict*",
+        "waMore": "I would like to receive more information, without obligation.",
+        "pdfTitle": "Suitability Assessment Report",
+        "pdfDate": "Date",
+        "pdfTenants": "Number of tenants",
+        "pdfOccupants": "Number of occupants",
+        "pdfFooter": "Report generated by Giuliato&Battistin Immobiliare",
+        "disclaimer": "This calculation is purely indicative and does not constitute a binding assessment. All lease applications are subject to evaluation and approval by qualified personnel."
+};
+        const CURRENCY_FORMATTER = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' });
+        const $ = id => document.getElementById(id);
+        const fmt = n => CURRENCY_FORMATTER.format(n);
+        const num = v => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
+        const fill = (s, vars) => s.replace(/\{(\w+)\}/g, (m, k) => vars[k]);
 
-        function updateConduttoreTitles() {
-            const conduttoriEls = conduttoriContainer.querySelectorAll('.conduttore');
-            if (conduttoriEls.length === 1) {
-                conduttoriEls[0].querySelector('.conduttore-title').textContent = 'Tenant';
-            } else {
-                conduttoriEls.forEach((el, index) => {
-                    el.querySelector('.conduttore-title').textContent = `Tenant ${index + 1}`;
-                });
-            }
+        // --- CALCULATION (pure, no DOM) ---
+        // Monthly living costs by number of occupants (5 or more share the same figure).
+        const LIVING_COSTS = { 1: 600, 2: 700, 3: 800, 4: 900 };
+        const LIVING_COST_MAX = 1000;
+
+        function computeCongruity(p) {
+            // p: { gross, taxes, monthlyLoans, occupants, rent }
+            const monthlyLiving = LIVING_COSTS[p.occupants] || LIVING_COST_MAX;
+            const annualLiving = monthlyLiving * 12;
+            const annualLoans = p.monthlyLoans * 12;
+            const annualRent = p.rent * 12;
+            const required = annualLiving + p.taxes + annualLoans + annualRent;
+            const difference = p.gross - required;
+            return { monthlyLiving, annualLiving, annualLoans, annualRent, required, difference, sufficient: difference >= 0 };
         }
 
-        function createConduttoreElement(id) {
-            const div = document.createElement('div');
-            div.className = 'conduttore';
-            div.id = `conduttore-${id}`;
-            div.innerHTML = `
-                <div class="conduttore-header">
-                    <span class="conduttore-title"></span>
-                    ${conduttoriContainer.children.length > 0 ? `<button class="btn btn-sm" onclick="removeConduttore(${id})">&times; Remove</button>` : ''}
+        // --- DOM ---
+        const form = $('congruity-form'), tenantsEl = $('tenants'), resultsSection = $('results-section'), errorEl = $('error-message');
+        let tenantCounter = 0, last = null;
+
+        function showError(message, field) {
+            errorEl.textContent = message; errorEl.classList.remove('hidden');
+            document.querySelectorAll('[aria-invalid]').forEach(el => el.removeAttribute('aria-invalid'));
+            if (field) { field.setAttribute('aria-invalid', 'true'); field.focus(); }
+        }
+        function clearError() {
+            errorEl.classList.add('hidden'); errorEl.textContent = '';
+            document.querySelectorAll('[aria-invalid]').forEach(el => el.removeAttribute('aria-invalid'));
+        }
+        function resetResults() { resultsSection.classList.remove('visible'); last = null; }
+        form.addEventListener('input', () => { clearError(); resetResults(); });
+
+        function fieldHtml(id, key, placeholder) {
+            return `<div class="field">
+                <div class="label-row">
+                    <label for="${key}-${id}">${T['label_' + key]}</label>
+                    <button type="button" class="help-btn" aria-expanded="false" aria-controls="help-${key}-${id}" aria-label="${T.helpAria}">?</button>
                 </div>
-                <div class="conduttore-grid">
-                    <div class="form-group">
-                        <div class="form-group-header">
-                            <label for="reddito-lordo-${id}">Gross Income</label>
-                            <span class="help-icon" data-tooltip-target="tooltip-ral-${id}">?</span>
-                        </div>
-                        <div class="input-group">
-                            <span class="input-group-addon">€</span>
-                            <input type="number" id="reddito-lordo-${id}" class="reddito-input" placeholder="Annual Gross">
-                        </div>
-                        <div class="tooltip" id="tooltip-ral-${id}">Based on the tenant's income type, the gross annual income or taxable income is found on the corresponding income document, such as the CU Model (Certificazione Unica) for employment and pension income or the UNICO Model (Modello UNICO) for self-employment income.</div>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-group-header">
-                            <label for="imposte-${id}">Annual Taxes</label>
-                            <span class="help-icon" data-tooltip-target="tooltip-imposte-${id}">?</span>
-                        </div>
-                        <div class="input-group">
-                            <span class="input-group-addon">€</span>
-                            <input type="number" id="imposte-${id}" class="imposte-input" placeholder="Tax Return">
-                        </div>
-                        <div class="tooltip"id="tooltip-imposte-${id}">Based on the tenant's income type, tax withholdings are found on the corresponding income document, such as the CU Model (Certificazione Unica) for employment and pension income or the UNICO Model (Modello UNICO) for self-employment income.</div>
-                    </div>
-                     <div class="form-group">
-                        <div class="form-group-header">
-                            <label for="finanziamenti-${id}">Loan Payments</label>
-                            <span class="help-icon" data-tooltip-target="tooltip-fin-${id}">?</span>
-                        </div>
-                        <div class="input-group">
-                            <span class="input-group-addon">€</span>
-                            <input type="number" id="finanziamenti-${id}" class="finanziamenti-input" placeholder="Monthly Payment">
-                        </div>
-                        <div class="tooltip" id="tooltip-fin-${id}">Data related to loans taken from pay slips (salary-backed loans, payment delegations, etc.) or from mortgage information provided by the tenants and the UNICO model.</div>
-                    </div>
+                <p class="help-text hidden" id="help-${key}-${id}">${T['help_' + key]}</p>
+                <div class="input-wrapper"><span class="currency-symbol">€</span><input type="number" id="${key}-${id}" data-key="${key}" inputmode="decimal" min="0" step="any" placeholder="${placeholder}"></div>
+            </div>`;
+        }
+
+        function addTenant() {
+            tenantCounter++;
+            const id = tenantCounter;
+            const div = document.createElement('div');
+            div.className = 'tenant';
+            div.dataset.id = id;
+            div.innerHTML = `<div class="tenant-head">
+                    <span class="tenant-title"></span>
+                    ${tenantsEl.children.length > 0 ? `<button type="button" class="btn btn-remove" data-remove="${id}">&times; ${T.remove}</button>` : ''}
+                </div>
+                <div class="field-grid">
+                    ${fieldHtml(id, 'gross', T.ph_gross)}
+                    ${fieldHtml(id, 'taxes', T.ph_taxes)}
+                    ${fieldHtml(id, 'loans', T.ph_loans)}
                 </div>`;
-            conduttoriContainer.appendChild(div);
-            updateCoConduttoreNote();
-            updateConduttoreTitles();
+            tenantsEl.appendChild(div);
+            refreshTenants();
         }
 
-        function updateCoConduttoreNote() {
-            coConduttoreNote.style.display = conduttoriContainer.children.length > 1 ? 'block' : 'none';
+        function refreshTenants() {
+            const items = tenantsEl.querySelectorAll('.tenant');
+            items.forEach((el, i) => { el.querySelector('.tenant-title').textContent = items.length === 1 ? T.tenant : T.tenant + ' ' + (i + 1); });
+            $('co-note').classList.toggle('hidden', items.length < 2);
         }
 
-        window.removeConduttore = function(id) {
-            document.getElementById(`conduttore-${id}`).remove();
-            updateCoConduttoreNote();
-            updateConduttoreTitles();
-        }
-
-        addConduttoreBtn.addEventListener('click', () => {
-            conduttoreIdCounter++;
-            createConduttoreElement(conduttoreIdCounter);
-        });
-
-        document.body.addEventListener('click', function(e) {
-            if (e.target.classList.contains('help-icon')) {
-                e.stopPropagation(); 
-                const targetId = e.target.getAttribute('data-tooltip-target');
-                const tooltip = document.getElementById(targetId);
-                const isAlreadyActive = tooltip.classList.contains('active');
-                document.querySelectorAll('.tooltip.active').forEach(activeTooltip => {
-                    activeTooltip.classList.remove('active');
-                });
-                if (!isAlreadyActive) {
-                    tooltip.classList.add('active');
-                }
-            } else {
-                document.querySelectorAll('.tooltip.active').forEach(activeTooltip => {
-                    activeTooltip.classList.remove('active');
-                });
+        $('add-tenant-btn').addEventListener('click', () => { addTenant(); resetResults(); });
+        form.addEventListener('click', e => {
+            const rm = e.target.closest('[data-remove]');
+            if (rm) { rm.closest('.tenant').remove(); refreshTenants(); resetResults(); clearError(); return; }
+            const help = e.target.closest('.help-btn');
+            if (help) {
+                const box = $(help.getAttribute('aria-controls'));
+                const open = box.classList.toggle('hidden') === false;
+                help.setAttribute('aria-expanded', String(open));
             }
         });
 
-        function formatCurrency(value) {
-            // Using it-IT locale to keep the € formatting consistent, but US English text.
-            return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value);
-        }
-        
-        function renderSummaryItem(label, value, valueClass = '') {
-            return `<div class="summary-item"><span class="label">${label}</span><span class="value ${valueClass}">${value}</span></div>`;
-        }
-        
-        calculateBtn.addEventListener('click', () => {
-            let totalGrossIncome = 0;
-            let totalAnnualTaxes = 0;
-            let totalMonthlyLoans = 0;
-            const conduttoriEls = conduttoriContainer.querySelectorAll('.conduttore');
-            if (conduttoriEls.length === 0) {
-                alert('Please add at least one tenant.');
-                return;
-            }
-            conduttoriEls.forEach(el => {
-                const id = el.id.split('-')[1];
-                totalGrossIncome += parseFloat(document.getElementById(`reddito-lordo-${id}`).value) || 0;
-                totalAnnualTaxes += parseFloat(document.getElementById(`imposte-${id}`).value) || 0;
-                totalMonthlyLoans += parseFloat(document.getElementById(`finanziamenti-${id}`).value) || 0;
+        form.addEventListener('submit', e => { e.preventDefault(); calculate(); });
+
+        function calculate() {
+            clearError();
+            const tenants = [...tenantsEl.querySelectorAll('.tenant')];
+            if (tenants.length === 0) { showError(T.errNoTenant); return; }
+
+            let gross = 0, taxes = 0, monthlyLoans = 0, negative = null;
+            tenants.forEach(el => {
+                el.querySelectorAll('input[data-key]').forEach(inp => {
+                    const v = num(inp.value);
+                    if (v < 0 && !negative) negative = inp;
+                    if (inp.dataset.key === 'gross') gross += v;
+                    else if (inp.dataset.key === 'taxes') taxes += v;
+                    else monthlyLoans += v;
+                });
             });
-            const totalAnnualLoans = totalMonthlyLoans * 12;
+            const occupantsInput = $('occupants'), rentInput = $('rent');
+            const occupants = num(occupantsInput.value), rent = num(rentInput.value);
 
-            const numOccupants = parseInt(document.getElementById('occupanti').value) || 0;
-            const monthlyRent = parseFloat(document.getElementById('canone-richiesto').value) || 0;
-            const annualRent = monthlyRent * 12;
+            if (negative) { showError(T.errNegative, negative); return; }
+            if (gross <= 0) { showError(T.errGross, tenants[0].querySelector('input[data-key="gross"]')); return; }
+            if (!Number.isInteger(occupants) || occupants < 1) { showError(T.errOccupants, occupantsInput); return; }
+            if (rent <= 0) { showError(T.errRent, rentInput); return; }
+            if (taxes > gross) { showError(T.errTaxes, tenants[0].querySelector('input[data-key="taxes"]')); return; }
 
-            if (totalGrossIncome === 0 || numOccupants === 0 || monthlyRent === 0) {
-                alert('Please ensure you have entered Gross Income, Number of Occupants, and Requested Rent.');
-                return;
-            }
-
-            let baseMonthlyCost;
-            if (numOccupants === 1) { baseMonthlyCost = 600; }
-            else if (numOccupants === 2) { baseMonthlyCost = 700; }
-            else if (numOccupants === 3) { baseMonthlyCost = 800; }
-            else if (numOccupants === 4) { baseMonthlyCost = 900; }
-            else { baseMonthlyCost = 1000; }
-            const baseAnnualCost = baseMonthlyCost * 12;
-
-            const requiredGrossIncome = baseAnnualCost + totalAnnualTaxes + totalAnnualLoans + annualRent;
-
-            const isSufficient = totalGrossIncome >= requiredGrossIncome;
-            let judgementClass, judgementTitle;
-
-            if (isSufficient) {
-                judgementClass = 'judgement-congruo';
-                judgementTitle = 'SUITABLE INCOME';
-            } else {
-                judgementClass = 'judgement-insufficiente';
-                judgementTitle = 'INSUFFICIENT INCOME';
-            }
-
-            resultsSection.style.display = 'block';
-            judgementResultEl.className = 'judgement-card ' + judgementClass;
-            judgementResultEl.innerHTML = `<div class="judgement-title">${judgementTitle}</div>`;
-            
-            const difference = totalGrossIncome - requiredGrossIncome;
-            
-            let differenceHtml;
-            if (isSufficient) {
-                 differenceHtml = renderSummaryItem('SURPLUS', formatCurrency(difference));
-            } else {
-                 differenceHtml = renderSummaryItem('OUTCOME', 'Additional guarantees required', 'negative');
-            }
-
-            summaryDetailsEl.innerHTML = `
-                ${renderSummaryItem('Total Annual Gross Income', formatCurrency(totalGrossIncome))}
-                ${renderSummaryItem('Total Annual Taxes', formatCurrency(totalAnnualTaxes))}
-                ${renderSummaryItem('Total Monthly Loan Payments', formatCurrency(totalMonthlyLoans))}
-                <hr style="border:none; margin: 0.5rem 0;">
-                ${renderSummaryItem('Required Gross Income', formatCurrency(requiredGrossIncome), 'strong')}
-                <hr style="border:none; margin: 0.5rem 0;">
-                ${differenceHtml}
-            `;
-
-            const summaryText = `*Suitability Assessment Summary*\n\n` +
-                `*Total Annual Gross Income:* ${formatCurrency(totalGrossIncome)}\n` +
-                `*Total Annual Taxes:* ${formatCurrency(totalAnnualTaxes)}\n` +
-                `*Total Monthly Loan Payments:* ${formatCurrency(totalMonthlyLoans)}\n` +
-                `*Requested Monthly Rent:* ${formatCurrency(monthlyRent)}\n\n` +
-                `*--- Result ---*\n` +
-                `*Required Income:* ${formatCurrency(requiredGrossIncome)}\n` +
-                `*Judgment:* ${judgementTitle}\n\n` +
-                `I would like to receive more information with no obligation.`;
-
-            const encodedText = encodeURIComponent(summaryText);
-            const whatsappUrl = `https://wa.me/390444525447?text=${encodedText}`; // Using your saved WA number
-            whatsappBtnContainer.innerHTML = `<a href="${whatsappUrl}" target="_blank" class="btn btn-whatsapp">Need more information?</a>`;
-            
+            const r = computeCongruity({ gross, taxes, monthlyLoans, occupants, rent });
+            last = Object.assign({ gross, taxes, monthlyLoans, occupants, rent, tenants: tenants.length }, r);
+            display(last);
+            resultsSection.focus({ preventScroll: true });
             resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-        
-        pdfBtn.addEventListener('click', () => {
-            const { jsPDF } = window.jspdf;
-            const reportContent = document.getElementById('report-content');
-            const originalBg = reportContent.style.backgroundColor;
-            reportContent.style.backgroundColor = 'white';
-            
-            html2canvas(reportContent, { scale: 2 }).then(canvas => {
-                reportContent.style.backgroundColor = originalBg;
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const imgProps = pdf.getImageProperties(imgData);
-                const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                
-                pdf.setFont('helvetica', 'bold');
-                pdf.setFontSize(16);
-                pdf.setTextColor(getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim());
-                pdf.text('Suitability Assessment Report', pdfWidth / 2, 15, { align: 'center' });
-                pdf.addImage(imgData, 'PNG', 10, 25, pdfWidth - 20, imgHeight * ((pdfWidth - 20)/pdfWidth) );
-                pdf.setFontSize(8);
-                pdf.setTextColor(getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim());
-                const text = `Report generated by Giuliato&Battistin Immobiliare | ${new Date().toLocaleDateString('en-US')}`;
-                pdf.text(text, pdfWidth / 2, pdf.internal.pageSize.getHeight() - 10, { align: 'center' });
-                
-                pdf.save(`Rent_Suitability_Report_${new Date().toISOString().slice(0,10)}.pdf`);
-            });
+        }
+
+        const row = (label, value, cls) => `<div class="row ${cls || ''}"><dt>${label}</dt><dd>${value}</dd></div>`;
+
+        function display(c) {
+            const verdict = $('verdict');
+            verdict.textContent = c.sufficient ? T.okTitle : T.koTitle;
+            verdict.className = 'range verdict ' + (c.sufficient ? 'ok' : 'ko');
+            const note = $('verdict-note');
+            note.className = 'callout' + (c.sufficient ? '' : ' warn');
+            note.textContent = c.sufficient ? T.okNote : T.koNote;
+
+            $('summary-details').innerHTML =
+                row(T.rowGross, fmt(c.gross)) +
+                row(T.rowTaxes, fmt(c.taxes)) +
+                row(fill(T.rowLoans, { monthly: fmt(c.monthlyLoans) }), fmt(c.annualLoans)) +
+                row(fill(T.rowLiving, { n: c.occupants, monthly: fmt(c.monthlyLiving) }), fmt(c.annualLiving)) +
+                row(fill(T.rowRent, { monthly: fmt(c.rent) }), fmt(c.annualRent)) +
+                row(T.rowRequired, fmt(c.required), 'strong') +
+                (c.sufficient ? row(T.rowSurplus, fmt(c.difference)) : row(T.rowShortfall, fmt(-c.difference), 'deduction'));
+
+            const text = T.waTitle + '\n\n' +
+                T.waGross + ': ' + fmt(c.gross) + '\n' +
+                T.waTaxes + ': ' + fmt(c.taxes) + '\n' +
+                T.waLoans + ': ' + fmt(c.monthlyLoans) + '\n' +
+                T.waRent + ': ' + fmt(c.rent) + '\n' +
+                T.waOccupants + ': ' + c.occupants + '\n\n' +
+                T.waRequired + ': ' + fmt(c.required) + '\n' +
+                T.waVerdict + ': ' + (c.sufficient ? T.okTitle : T.koTitle) + '\n\n' + T.waMore;
+            $('whatsapp-btn').href = 'https://wa.me/390444525447?text=' + encodeURIComponent(text);
+
+            resultsSection.classList.add('visible');
+        }
+
+        $('pdf-btn').addEventListener('click', () => {
+            const c = last;
+            if (!c) { showError(T.errCalcFirst); return; }
+            if (!window.jspdf) { showError(T.errPdfLib); return; }
+            const doc = new window.jspdf.jsPDF();
+            let y = 20;
+            doc.setFont('Helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor('#0F766E');
+            doc.text(T.pdfTitle, 105, y, { align: 'center' }); y += 7;
+            doc.setFont('Helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor('#56677A');
+            doc.text(T.pdfDate + ': ' + new Date().toLocaleDateString('en-US'), 105, y, { align: 'center' }); y += 6;
+            doc.setDrawColor('#DCE1E6'); doc.setLineWidth(0.5); doc.line(20, y, 190, y); y += 12;
+
+            doc.setFont('Helvetica', 'bold'); doc.setFontSize(20);
+            doc.setTextColor(c.sufficient ? '#115E59' : '#B42318');
+            doc.text(c.sufficient ? T.okTitle : T.koTitle, 105, y, { align: 'center' }); y += 14;
+
+            const line = (label, value, bold) => {
+                doc.setFont('Helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(11); doc.setTextColor('#2C3E50');
+                doc.text(label, 25, y); doc.text(value, 185, y, { align: 'right' }); y += 8;
+            };
+            line(T.pdfTenants, String(c.tenants));
+            line(T.pdfOccupants, String(c.occupants));
+            y += 2;
+            line(T.rowGross, fmt(c.gross));
+            line(T.rowTaxes, fmt(c.taxes));
+            line(fill(T.rowLoans, { monthly: fmt(c.monthlyLoans) }), fmt(c.annualLoans));
+            line(fill(T.rowLiving, { n: c.occupants, monthly: fmt(c.monthlyLiving) }), fmt(c.annualLiving));
+            line(fill(T.rowRent, { monthly: fmt(c.rent) }), fmt(c.annualRent));
+            doc.line(20, y - 4, 190, y - 4); y += 2;
+            line(T.rowRequired, fmt(c.required), true);
+            line(c.sufficient ? T.rowSurplus : T.rowShortfall, fmt(Math.abs(c.difference)), true);
+            if (!c.sufficient) { doc.setFont('Helvetica', 'italic'); doc.setFontSize(10); doc.setTextColor('#B42318'); doc.text(T.koNote, 25, y + 2); y += 10; }
+
+            y = Math.max(y + 15, 230);
+            doc.setFont('Helvetica', 'italic'); doc.setFontSize(9); doc.setTextColor('#56677A');
+            const disc = doc.splitTextToSize(T.disclaimer, 170);
+            doc.text(disc, 20, y);
+            doc.setFont('Helvetica', 'normal'); doc.setFontSize(8);
+            doc.text(T.pdfFooter + ' | ' + new Date().toLocaleDateString('en-US'), 105, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+            doc.save('Suitability_Report-' + new Date().toISOString().slice(0, 10) + '.pdf');
         });
 
-        conduttoreIdCounter = 1;
-        createConduttoreElement(conduttoreIdCounter);
-    });
+        addTenant();
+
+        // --- Iframe height for the host page ---
+        (function () {
+            if (window.parent === window) return;
+            let lastH = 0;
+            const send = () => {
+                const height = Math.ceil(document.body.getBoundingClientRect().height);
+                if (height && height !== lastH) {
+                    lastH = height;
+                    window.parent.postMessage({ source: 'gb-calcolatore', type: 'height', height }, '*');
+                }
+            };
+            if ('ResizeObserver' in window) new ResizeObserver(send).observe(document.body);
+            window.addEventListener('load', send);
+            send();
+        })();
     </script>
 </body>
 </html>
